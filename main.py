@@ -5,9 +5,9 @@ import os
 
 
 def main():
-    coords = input('Введите координаты (через запятую):\n')
-    z = input('Введите маштаб (18 > x > 0):\n')
-    # coords, z = '30,30', '18'
+    # coords = input('Введите координаты (через запятую):\n')
+    # z = input('Введите маштаб (18 > x > 0):\n')
+    coords, z = '30,30', '18'
     show_map(ll=coords, z=z)
     sys.exit()
 
@@ -28,7 +28,7 @@ def generate_img(ll=None, z=None, map_type="sat", add_params=None):
         print("Ошибка выполнения запроса:")
         print(map_request)
         print("Http статус:", response.status_code, "(", response.reason, ")")
-        sys.exit(1)
+        return
     map_file = "map.png"
     try:
         with open(map_file, "wb") as file:
@@ -39,6 +39,7 @@ def generate_img(ll=None, z=None, map_type="sat", add_params=None):
 
 
 def show_map(ll=None, z=None, map_type="sat", add_params=None):
+    z = int(z)
     generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
     pygame.init()
     screen = pygame.display.set_mode((600, 450))
@@ -57,6 +58,26 @@ def show_map(ll=None, z=None, map_type="sat", add_params=None):
                 if event.key == pygame.K_PAGEDOWN:
                     if int(z) < 18:
                         z = str(int(z) + 1)
+                    generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
+                if event.key == pygame.K_UP:
+                    long, lat = (float(i) for i in ll.split(','))
+                    lat = lat + 0.5
+                    ll = f'{long},{lat}'
+                    generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
+                if event.key == pygame.K_DOWN:
+                    long, lat = (float(i) for i in ll.split(','))
+                    lat = lat - 0.5
+                    ll = f'{long},{lat}'
+                    generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
+                if event.key == pygame.K_RIGHT:
+                    long, lat = (float(i) for i in ll.split(','))
+                    long = long + 0.5
+                    ll = f'{long},{lat}'
+                    generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
+                if event.key == pygame.K_LEFT:
+                    long, lat = (float(i) for i in ll.split(','))
+                    long = long - 0.5
+                    ll = f'{long},{lat}'
                     generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
         screen.blit(pygame.image.load('map.png'), (0, 0))
         pygame.display.flip()
