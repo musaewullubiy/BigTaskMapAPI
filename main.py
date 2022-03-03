@@ -2,6 +2,7 @@ import pygame
 import requests
 import sys
 import os
+from geocoder import get_coordinates
 
 
 def load_image(path, colorkey=None, flag=True):
@@ -35,12 +36,12 @@ class URadioButtons(pygame.sprite.Sprite):
         self.coords = coords
         self.buttons = []
         self.checked_button = 0
-        self.font = pygame.font.Font('font/arial.ttf', 30)
+        self.font = pygame.font.Font('font/arial.ttf', 15)
         self.screen = screen
         self.draw()
 
     def draw(self):
-        self.image = pygame.Surface((130 * len(self.buttons), 100), pygame.SRCALPHA)
+        self.image = pygame.Surface((65 * len(self.buttons), 50), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
         self.rect.x = self.coords[0]
         self.rect.y = self.coords[1]
@@ -51,24 +52,108 @@ class URadioButtons(pygame.sprite.Sprite):
                 color = (255, 0, 0)
                 image_name = 'ui_images/RadioButtonChecked.png'
             text_pg = self.font.render(self.buttons[i][0], True, color)
-            btn_img = pygame.transform.scale(load_image(image_name, colorkey=(255, 255, 255)),
-                                             (100, 100))
-            self.image.blit(btn_img, (100 * i + 5 * (i + 1), 0))
-            self.image.blit(text_pg, (100 * i + 10 + 5 * (i + 1), 80 - text_pg.get_height()))
-            self.screen.blit(self.image, (0, 0))
+            btn_img = pygame.transform.scale(load_image(image_name, colorkey=-1),
+                                             (50, 50))
+            self.image.blit(btn_img, (50 * i + 5 * (i + 1), 0))
+            self.image.blit(text_pg, (50 * i + 10 + 5 * (i + 1), 40 - text_pg.get_height()))
+            self.screen.blit(self.image, (self.coords[0], 0))
 
     def click_check(self, pos):
         if pygame.sprite.collide_rect(pos, self):
-            cell_x = (pos.rect.x - 10) // 100
-            cell_y = (pos.rect.y - 10) // 100
+            cell_x = (pos.rect.x - 10) // 50 - self.coords[0] // 50
+            cell_y = (pos.rect.y - 10) // 50
             if cell_x < 0 or cell_x >= len(self.buttons) or cell_y != 0:
                 return
             self.checked_button = cell_x
             self.buttons[cell_x][1]()
             self.draw()
 
+    def hover_check(self, pos):
+        pass
+
     def add_button(self, text, func):
         self.buttons.append([text, func])
+
+
+class ULineEdit(pygame.sprite.Sprite):
+    def __init__(self, screen, coords, group):
+        super(ULineEdit, self).__init__(group)
+        self.font = pygame.font.Font('font/arial.ttf', 15)
+        self.screen = screen
+        self.coords = coords
+        self.text = ''
+        self.en_to_ru = {'A': 'ф', 'B': 'и',
+                         'C': 'с', 'D': 'в', 'E': 'у',
+                         'F': 'а', 'G': 'п', 'H': 'р',
+                         'I': 'ш', 'J': 'о', 'K': 'л',
+                         'L': 'д', 'M': 'ь', 'N': 'т',
+                         'O': 'щ', 'P': 'з', 'Q': 'й',
+                         'R': 'к', 'S': 'ы', 'T': 'е',
+                         'U': 'г', 'V': 'м', 'W': 'ц',
+                         'X': 'ч', 'Y': 'н', 'Z': 'я',
+                         ',': 'б', '.': 'ю', ';': 'ж',
+                         '\'': 'э', '[': 'х', ']': 'ъ'}
+        self.draw()
+
+    def draw(self):
+        self.image = pygame.Surface((200, 50), pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+        self.rect.x = self.coords[0]
+        self.rect.y = self.coords[1]
+        self.image.blit(pygame.transform.scale(load_image('ui_images/LineEdit.png', colorkey=-1), (200, 50)), (0, 0))
+        text_pg = self.font.render(self.text, True, (0, 0, 0))
+        self.image.blit(text_pg, (10, 40 - text_pg.get_height()))
+        self.screen.blit(self.image, (self.coords[0], 0))
+
+    def click_check(self, pos):
+        pass
+
+    def hover_check(self, pos):
+        if pygame.sprite.collide_rect(pos, self):
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    key = pygame.key.name(event.key)
+                    if key == 'backspace':
+                        if len(self.text) >= 1:
+                            self.text = self.text[:-1]
+                    elif key.upper() in self.en_to_ru:
+                        self.text += self.en_to_ru[key.upper()]
+                    elif key == 'space':
+                        self.text += ' '
+
+    def get_text(self):
+        return self.text
+
+    def set_text(self, text):
+        self.text = text
+
+
+class UButton2(pygame.sprite.Sprite):
+    def __init__(self, screen, coords, group, text, func):
+        super(UButton2, self).__init__(group)
+        self.font = pygame.font.Font('font/arial.ttf', 15)
+        self.screen = screen
+        self.coords = coords
+        self.text = text
+        self.func = func
+        self.draw()
+
+    def draw(self):
+        self.image = pygame.Surface((80, 50), pygame.SRCALPHA)
+        self.rect = self.image.get_rect()
+        self.rect.x = self.coords[0]
+        self.rect.y = self.coords[1]
+        self.image.blit(pygame.transform.scale(load_image('ui_images/2Button.png', colorkey=-1), (80, 50)), (0, 0))
+        text_pg = self.font.render(self.text, True, (0, 0, 0))
+        self.image.blit(text_pg, (10, 40 - text_pg.get_height()))
+        self.screen.blit(self.image, (self.coords[0], 0))
+
+    def hover_check(self, pos):
+        pass
+
+    def click_check(self, pos):
+        if pygame.sprite.collide_rect(pos, self):
+            self.func()
 
 
 def main():
@@ -86,6 +171,7 @@ def generate_img(ll=None, z=None, map_type="sat", add_params=None):
         if int(z) < 0:
             z = 0
         map_request = f"http://static-maps.yandex.ru/1.x/?ll={ll}&z={z}&l={map_type}"
+        print(map_request)
     else:
         map_request = f"http://static-maps.yandex.ru/1.x/?l={map_type}"
     if add_params:
@@ -106,13 +192,29 @@ def generate_img(ll=None, z=None, map_type="sat", add_params=None):
 
 
 def show_map(ll=None, z=None, map_type="map", add_params=None):
-    def change_map(new_map_type):
+    def change_map_type(new_map_type):
         nonlocal map_type
         nonlocal screen
         map_type = new_map_type
         screen.fill((0, 0, 0))
         generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
         screen.blit(pygame.image.load('map.png'), (0, 0))
+
+    def search_map(text_to_search):
+        nonlocal screen
+        nonlocal add_params
+        nonlocal ll
+        crds = get_coordinates(text_to_search)
+        if not add_params:
+            add_params = 'pt='
+        else:
+            add_params += '~'
+        add_params += f'{crds[0]},{crds[1]},pm2dbm'
+        ll = f'{crds[0]},{crds[1]}'
+        screen.fill((0, 0, 0))
+        generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
+        screen.blit(pygame.image.load('map.png'), (0, 0))
+
     z = int(z)
     generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
     pygame.init()
@@ -120,11 +222,12 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
     screen.blit(pygame.image.load('map.png'), (0, 0))
 
     all_sprites = pygame.sprite.Group()
-    radios = URadioButtons(screen, (0, 0), all_sprites)
-    radios.add_button('map', lambda: change_map('map'))
-    radios.add_button('sat', lambda: change_map('sat'))
-    radios.add_button('skl', lambda: change_map('skl'))
-
+    radios = URadioButtons(screen, (400, 0), all_sprites)
+    radios.add_button('map', lambda: change_map_type('map'))
+    radios.add_button('sat', lambda: change_map_type('sat'))
+    radios.add_button('skl', lambda: change_map_type('skl'))
+    line_edit = ULineEdit(screen, (10, 0), all_sprites)
+    UButton2(screen, (220, 0), all_sprites, 'Искать', lambda: search_map(line_edit.get_text()))
     pygame.display.flip()
     running = True
     mouse_sprite = SpriteMouseLocation()
@@ -167,8 +270,10 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
                 mouse_sprite.rect.x, mouse_sprite.rect.y = pygame.mouse.get_pos()
                 for i in all_sprites:
                     i.click_check(mouse_sprite)
+        mouse_sprite.rect.x, mouse_sprite.rect.y = pygame.mouse.get_pos()
         for i in all_sprites:
             i.draw()
+            i.hover_check(mouse_sprite)
         pygame.display.flip()
 
     pygame.quit()
