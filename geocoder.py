@@ -67,3 +67,20 @@ def get_nearest_object(point, kind):
     json_response = response.json()
     features = json_response["response"]["GeoObjectCollection"]["featureMember"]
     return features[0]["GeoObject"]["name"] if features else None
+
+
+def get_address(ll):
+    geocoder_request = f"http://geocode-maps.yandex.ru/1.x/"
+    geocoder_params = {
+        "apikey": API_KEY,
+        "geocode": ll,
+        "format": "json"}
+    response = requests.get(geocoder_request, params=geocoder_params)
+    if not response:
+        raise RuntimeError(
+            f"""Ошибка выполнения запроса:
+                {geocoder_request}
+                Http статус: {response.status_code,} ({response.reason})""")
+    json_response = response.json()
+    features = json_response["response"]["GeoObjectCollection"]["featureMember"]
+    return features[0]["GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["text"] if features else None
