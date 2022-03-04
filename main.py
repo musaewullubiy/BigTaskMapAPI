@@ -108,18 +108,17 @@ class ULineEdit(pygame.sprite.Sprite):
     def click_check(self, pos):
         pass
 
-    def hover_check(self, pos):
+    def hover_check(self, pos, event):
         if pygame.sprite.collide_rect(pos, self):
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    key = pygame.key.name(event.key)
-                    if key == 'backspace':
-                        if len(self.text) >= 1:
-                            self.text = self.text[:-1]
-                    elif key.upper() in self.en_to_ru:
-                        self.text += self.en_to_ru[key.upper()]
-                    elif key == 'space':
-                        self.text += ' '
+            if event.type == pygame.KEYDOWN:
+                key = pygame.key.name(event.key)
+                if key == 'backspace':
+                    if len(self.text) >= 1:
+                        self.text = self.text[:-1]
+                elif key.upper() in self.en_to_ru:
+                    self.text += self.en_to_ru[key.upper()]
+                elif key == 'space':
+                    self.text += ' '
 
     def get_text(self):
         return self.text
@@ -129,21 +128,22 @@ class ULineEdit(pygame.sprite.Sprite):
 
 
 class UButton2(pygame.sprite.Sprite):
-    def __init__(self, screen, coords, group, text, func):
+    def __init__(self, screen, coords, group, text, func, image_name='ui_images/2ButtonBlue.png'):
         super(UButton2, self).__init__(group)
         self.font = pygame.font.Font('font/arial.ttf', 15)
         self.screen = screen
         self.coords = coords
         self.text = text
         self.func = func
+        self.image_name = image_name
         self.draw()
 
     def draw(self):
-        self.image = pygame.Surface((80, 50), pygame.SRCALPHA)
+        self.image = pygame.Surface((70, 50), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
         self.rect.x = self.coords[0]
         self.rect.y = self.coords[1]
-        self.image.blit(pygame.transform.scale(load_image('ui_images/2Button.png', colorkey=-1), (80, 50)), (0, 0))
+        self.image.blit(pygame.transform.scale(load_image(self.image_name, colorkey=-1), (70, 50)), (0, 0))
         text_pg = self.font.render(self.text, True, (0, 0, 0))
         self.image.blit(text_pg, (10, 40 - text_pg.get_height()))
         self.screen.blit(self.image, (self.coords[0], 0))
@@ -171,7 +171,6 @@ def generate_img(ll=None, z=None, map_type="sat", add_params=None):
         if int(z) < 0:
             z = 0
         map_request = f"http://static-maps.yandex.ru/1.x/?ll={ll}&z={z}&l={map_type}"
-        print(map_request)
     else:
         map_request = f"http://static-maps.yandex.ru/1.x/?l={map_type}"
     if add_params:
@@ -215,6 +214,18 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
         generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
         screen.blit(pygame.image.load('map.png'), (0, 0))
 
+    def reset_mark(lineedit):
+        nonlocal screen
+        nonlocal add_params
+        if '~' in add_params:
+            add_params = add_params.split('~')[:-1]
+        else:
+            add_params = ''
+        lineedit.set_text('')
+        screen.fill((0, 0, 0))
+        generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
+        screen.blit(pygame.image.load('map.png'), (0, 0))
+
     z = int(z)
     generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
     pygame.init()
@@ -222,15 +233,18 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
     screen.blit(pygame.image.load('map.png'), (0, 0))
 
     all_sprites = pygame.sprite.Group()
+
     radios = URadioButtons(screen, (400, 0), all_sprites)
     radios.add_button('map', lambda: change_map_type('map'))
     radios.add_button('sat', lambda: change_map_type('sat'))
     radios.add_button('skl', lambda: change_map_type('skl'))
     line_edit = ULineEdit(screen, (10, 0), all_sprites)
-    UButton2(screen, (220, 0), all_sprites, 'Искать', lambda: search_map(line_edit.get_text()))
-    pygame.display.flip()
-    running = True
+    button1 = UButton2(screen, (220, 0), all_sprites, 'Искать', lambda: search_map(line_edit.get_text()))
+    button2 = UButton2(screen, (291, 0), all_sprites, 'Сброс',
+                       lambda: reset_mark(line_edit), image_name='ui_images/2ButtonRed.png')
     mouse_sprite = SpriteMouseLocation()
+
+    running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -268,12 +282,19 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
                 screen.blit(load_image('map.png'), (0, 0))
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_sprite.rect.x, mouse_sprite.rect.y = pygame.mouse.get_pos()
-                for i in all_sprites:
-                    i.click_check(mouse_sprite)
+                radios.click_check(mouse_sprite)
+                button1.click_check(mouse_sprite)
+                button2.click_check(mouse_sprite)
+            if event.type == pygame.KEYDOWN:
+                mouse_sprite.rect.x, mouse_sprite.rect.y = pygame.mouse.get_pos()
+                line_edit.hover_check(mouse_sprite, event)
         mouse_sprite.rect.x, mouse_sprite.rect.y = pygame.mouse.get_pos()
-        for i in all_sprites:
-            i.draw()
-            i.hover_check(mouse_sprite)
+
+        radios.draw()
+        button1.draw()
+        button2.draw()
+        line_edit.draw()
+
         pygame.display.flip()
 
     pygame.quit()
