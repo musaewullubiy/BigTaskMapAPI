@@ -105,7 +105,7 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
     button1 = UButton(screen, (220, 0), all_sprites, 'Искать', lambda: search_map(line_edit.get_text(), label_address, label_mail))
     button2 = UButton(screen, (291, 0), all_sprites, 'Сброс', lambda: reset_mark(line_edit, label_address, label_mail),
                       image_name='ui_images/ButtonRed.png')
-    button3 = UButton(screen, (10, 380), all_sprites, 'Почта', lambda: label_mail.off_on(),
+    button3 = UButton(screen, (10, 380), all_sprites, 'Почта', lambda: (label_mail.off_on(), label_mail.draw()),
                       image_name='ui_images/ButtonRed.png')
     mouse_sprite = SpriteMouseLocation()
 
