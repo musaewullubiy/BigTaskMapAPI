@@ -54,17 +54,17 @@ class ULineEdit(pygame.sprite.Sprite):
         self.screen = screen
         self.coords = coords
         self.text = ''
-        self.en_to_ru = {'A': 'ф', 'B': 'и',
-                         'C': 'с', 'D': 'в', 'E': 'у',
-                         'F': 'а', 'G': 'п', 'H': 'р',
-                         'I': 'ш', 'J': 'о', 'K': 'л',
-                         'L': 'д', 'M': 'ь', 'N': 'т',
-                         'O': 'щ', 'P': 'з', 'Q': 'й',
-                         'R': 'к', 'S': 'ы', 'T': 'е',
-                         'U': 'г', 'V': 'м', 'W': 'ц',
-                         'X': 'ч', 'Y': 'н', 'Z': 'я',
-                         ',': 'б', '.': 'ю', ';': 'ж',
-                         '\'': 'э', '[': 'х', ']': 'ъ'}
+        self.en_to_ru = {'A': 'ф', 'B': 'и', 'C': 'с',
+                         'D': 'в', 'E': 'у', 'F': 'а',
+                         'G': 'п', 'H': 'р', 'I': 'ш',
+                         'J': 'о', 'K': 'л', 'L': 'д',
+                         'M': 'ь', 'N': 'т', 'O': 'щ',
+                         'P': 'з', 'Q': 'й', 'R': 'к',
+                         'S': 'ы', 'T': 'е', 'U': 'г',
+                         'V': 'м', 'W': 'ц', 'X': 'ч',
+                         'Y': 'н', 'Z': 'я', ',': 'б',
+                         '.': 'ю', ';': 'ж', '\'': 'э',
+                         '[': 'х', ']': 'ъ', '/': ','}
         self.draw()
 
     def draw(self):
@@ -89,6 +89,8 @@ class ULineEdit(pygame.sprite.Sprite):
                         self.text = self.text[:-1]
                 elif key.upper() in self.en_to_ru:
                     self.text += self.en_to_ru[key.upper()]
+                elif key.isdigit():
+                    self.text += key
                 elif key == 'space':
                     self.text += ' '
 
@@ -129,23 +131,32 @@ class UButton(pygame.sprite.Sprite):
 
 
 class ULabel(pygame.sprite.Sprite):
-    def __init__(self, screen, coords, group, text):
+    def __init__(self, screen, coords, group, text, height=40, font_size=10):
         super(ULabel, self).__init__(group)
-        self.font = pygame.font.Font('font/arial.ttf', 10)
+        self.font_size = font_size
+        self.font = pygame.font.Font('font/arial.ttf', self.font_size)
         self.screen = screen
         self.coords = coords
         self.text = text
+        self.height = height
+        self.on_flag = True
         self.draw()
 
     def draw(self):
-        self.image = pygame.Surface((200, 40), pygame.SRCALPHA)
-        self.rect = self.image.get_rect()
-        self.rect.x = self.coords[0]
-        self.rect.y = self.coords[1]
-        self.image.blit(pygame.transform.scale(load_image('ui_images/Label.png', colorkey=-1), (200, 40)), (0, 0))
-        text_pg = self.font.render(self.text, True, (0, 0, 0))
-        self.image.blit(text_pg, (10, 40 - text_pg.get_height()))
-        self.screen.blit(self.image, (self.coords[0], self.coords[1]))
+        if self.on_flag:
+            self.image = pygame.Surface((len(self.text) * self.font_size * 0.55, self.height), pygame.SRCALPHA)
+            self.rect = self.image.get_rect()
+            self.rect.x = self.coords[0]
+            self.rect.y = self.coords[1]
+            self.image.blit(pygame.transform.scale(load_image('ui_images/Label.png', colorkey=-1),
+                                                   (len(self.text) * self.font_size * 0.55, self.height)), (0, 0))
+            text_pg = self.font.render(self.text, True, (0, 0, 0))
+            self.image.blit(text_pg, (10, self.height - text_pg.get_height()))
+            self.screen.blit(self.image, (self.coords[0], self.coords[1]))
 
     def set_text(self, text):
         self.text = text
+
+    def off_on(self):
+        self.on_flag = not self.on_flag
+        print(self.on_flag)

@@ -2,7 +2,7 @@ import pygame
 import requests
 import sys
 import os
-from geocoder import get_coordinates, get_address
+from geocoder import get_coordinates, get_address, get_mail
 from UTINGAME import ULabel, ULineEdit, URadioButtons, UButton
 from SupportFuncs import load_image, SpriteMouseLocation
 
@@ -50,7 +50,7 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
         generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
         screen.blit(pygame.image.load('map.png'), (0, 0))
 
-    def search_map(text_to_search, label):
+    def search_map(text_to_search, label1, label2):
         nonlocal screen
         nonlocal add_params
         nonlocal ll
@@ -63,11 +63,14 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
         ll = f'{crds[0]},{crds[1]}'
         screen.fill((0, 0, 0))
         address = get_address(ll)
-        label.set_text(address)
+        mail = get_mail(address)
+        label1.set_text(address)
+        label2.set_text(mail)
+
         generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
         screen.blit(pygame.image.load('map.png'), (0, 0))
 
-    def reset_mark(lineedit, label):
+    def reset_mark(lineedit, label1, label2):
         nonlocal screen
         nonlocal add_params
         if add_params:
@@ -75,8 +78,11 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
                 add_params = '~'.join(add_params.split('~')[:-1])
             else:
                 add_params = None
+
         lineedit.set_text('')
-        label.set_text('')
+        label1.set_text('')
+        label2.set_text('')
+
         screen.fill((0, 0, 0))
         generate_img(ll=ll, z=z, map_type=map_type, add_params=add_params)
         screen.blit(pygame.image.load('map.png'), (0, 0))
@@ -94,10 +100,13 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
     radios.add_button('sat', lambda: change_map_type('sat'))
     radios.add_button('skl', lambda: change_map_type('skl'))
     line_edit = ULineEdit(screen, (10, 0), all_sprites)
-    button1 = UButton(screen, (220, 0), all_sprites, 'Искать', lambda: search_map(line_edit.get_text(), label))
-    button2 = UButton(screen, (291, 0), all_sprites, 'Сброс',
-                       lambda: reset_mark(line_edit, label), image_name='ui_images/ButtonRed.png')
-    label = ULabel(screen, (10, 60), all_sprites, '')
+    label_address = ULabel(screen, (10, 60), all_sprites, '', height=30, font_size=15)
+    label_mail = ULabel(screen, (10, 100), all_sprites, '', height=30, font_size=15)
+    button1 = UButton(screen, (220, 0), all_sprites, 'Искать', lambda: search_map(line_edit.get_text(), label_address, label_mail))
+    button2 = UButton(screen, (291, 0), all_sprites, 'Сброс', lambda: reset_mark(line_edit, label_address, label_mail),
+                      image_name='ui_images/ButtonRed.png')
+    button3 = UButton(screen, (10, 380), all_sprites, 'Почта', lambda: label_mail.off_on(),
+                      image_name='ui_images/ButtonRed.png')
     mouse_sprite = SpriteMouseLocation()
 
     running = True
@@ -141,6 +150,7 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
                 radios.click_check(mouse_sprite)
                 button1.click_check(mouse_sprite)
                 button2.click_check(mouse_sprite)
+                button3.click_check(mouse_sprite)
             if event.type == pygame.KEYDOWN:
                 mouse_sprite.rect.x, mouse_sprite.rect.y = pygame.mouse.get_pos()
                 line_edit.hover_check(mouse_sprite, event)
@@ -149,8 +159,10 @@ def show_map(ll=None, z=None, map_type="map", add_params=None):
         radios.draw()
         button1.draw()
         button2.draw()
+        button3.draw()
         line_edit.draw()
-        label.draw()
+        label_address.draw()
+        label_mail.draw()
 
         pygame.display.flip()
 

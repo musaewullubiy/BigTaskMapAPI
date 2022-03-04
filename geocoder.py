@@ -1,4 +1,5 @@
 import requests
+from pprint import pprint
 
 API_KEY = '40d1649f-0493-4b70-98ba-98533de7710b'
 
@@ -84,3 +85,23 @@ def get_address(ll):
     json_response = response.json()
     features = json_response["response"]["GeoObjectCollection"]["featureMember"]
     return features[0]["GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["text"] if features else None
+
+
+def get_mail(address):
+    geocoder_request = f"http://geocode-maps.yandex.ru/1.x/"
+    geocoder_params = {
+        "apikey": API_KEY,
+        "geocode": address,
+        "format": "json"}
+    response = requests.get(geocoder_request, params=geocoder_params)
+    if not response:
+        raise RuntimeError(
+            f"""Ошибка выполнения запроса:
+                {geocoder_request}
+                Http статус: {response.status_code,} ({response.reason})""")
+    json_response = response.json()
+    try:
+        mail = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['AdministrativeArea']['Locality']['Thoroughfare']['Premise']['PostalCode']['PostalCodeNumber']
+        return mail if mail else None
+    except Exception:
+        return 'Не имеет почтового индекса'
