@@ -87,6 +87,8 @@ class ULineEdit(pygame.sprite.Sprite):
                 if key == 'backspace':
                     if len(self.text) >= 1:
                         self.text = self.text[:-1]
+                elif key in ['б', 'ю', 'ж', 'э', 'х', 'ъ']:
+                    self.text += key
                 elif key.upper() in self.en_to_ru:
                     self.text += self.en_to_ru[key.upper()]
                 elif key.isdigit():
