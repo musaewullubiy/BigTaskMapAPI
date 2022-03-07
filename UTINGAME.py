@@ -159,4 +159,3 @@ class ULabel(pygame.sprite.Sprite):
 
     def off_on(self):
         self.on_flag = not self.on_flag
-        print(self.on_flag)
